@@ -1,0 +1,21 @@
+name: simplet5
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip=23.0.1
+  - pytorch=1.12.1
+  - cudatoolkit=11.6
+  - cudnn=8.1.0
+  - tensorboard
+  - pip:
+      - tensorflow
+      - tqdm
+      - numpy
+      - pandas
+      - sentencepiece
+      - torch>=1.7.0,!=1.8.0
+      - transformers==4.28.1
+      - pytorch-lightning==1.9.5

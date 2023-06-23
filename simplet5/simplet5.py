@@ -24,7 +24,7 @@ pl.seed_everything(42)
 
 
 class PyTorchDataModule(Dataset):
-    """  PyTorch Dataset class  """
+    """PyTorch Dataset class"""
 
     def __init__(
         self,
@@ -47,11 +47,11 @@ class PyTorchDataModule(Dataset):
         self.target_max_token_len = target_max_token_len
 
     def __len__(self):
-        """ returns length of data """
+        """returns length of data"""
         return len(self.data)
 
     def __getitem__(self, index: int):
-        """ returns dictionary of input tensors to feed into T5/MT5 model"""
+        """returns dictionary of input tensors to feed into T5/MT5 model"""
 
         data_row = self.data.iloc[index]
         source_text = data_row["source_text"]
@@ -90,7 +90,7 @@ class PyTorchDataModule(Dataset):
 
 
 class LightningDataModule(pl.LightningDataModule):
-    """ PyTorch Lightning data class """
+    """PyTorch Lightning data class"""
 
     def __init__(
         self,
@@ -137,7 +137,7 @@ class LightningDataModule(pl.LightningDataModule):
         )
 
     def train_dataloader(self):
-        """ training dataloader """
+        """training dataloader"""
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
@@ -146,7 +146,7 @@ class LightningDataModule(pl.LightningDataModule):
         )
 
     def test_dataloader(self):
-        """ test dataloader """
+        """test dataloader"""
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
@@ -155,7 +155,7 @@ class LightningDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self):
-        """ validation dataloader """
+        """validation dataloader"""
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
@@ -165,7 +165,7 @@ class LightningDataModule(pl.LightningDataModule):
 
 
 class LightningModel(pl.LightningModule):
-    """ PyTorch Lightning Model class"""
+    """PyTorch Lightning Model class"""
 
     def __init__(
         self,
@@ -191,7 +191,7 @@ class LightningModel(pl.LightningModule):
         self.save_only_last_epoch = save_only_last_epoch
 
     def forward(self, input_ids, attention_mask, decoder_attention_mask, labels=None):
-        """ forward step """
+        """forward step"""
         output = self.model(
             input_ids,
             attention_mask=attention_mask,
@@ -202,7 +202,7 @@ class LightningModel(pl.LightningModule):
         return output.loss, output.logits
 
     def training_step(self, batch, batch_size):
-        """ training step """
+        """training step"""
         input_ids = batch["source_text_input_ids"]
         attention_mask = batch["source_text_attention_mask"]
         labels = batch["labels"]
@@ -221,7 +221,7 @@ class LightningModel(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_size):
-        """ validation step """
+        """validation step"""
         input_ids = batch["source_text_input_ids"]
         attention_mask = batch["source_text_attention_mask"]
         labels = batch["labels"]
@@ -240,7 +240,7 @@ class LightningModel(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_size):
-        """ test step """
+        """test step"""
         input_ids = batch["source_text_input_ids"]
         attention_mask = batch["source_text_attention_mask"]
         labels = batch["labels"]
@@ -257,11 +257,11 @@ class LightningModel(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        """ configure optimizers """
+        """configure optimizers"""
         return AdamW(self.parameters(), lr=0.0001)
 
     def training_epoch_end(self, training_step_outputs):
-        """ save tokenizer and model on epoch end """
+        """save tokenizer and model on epoch end"""
         self.average_training_loss = np.round(
             torch.mean(torch.stack([x["loss"] for x in training_step_outputs])).item(),
             4,
@@ -284,18 +284,37 @@ class LightningModel(pl.LightningModule):
 
 
 class SimpleT5:
-    """ Custom SimpleT5 class """
+    """Custom SimpleT5 class"""
 
     def __init__(self) -> None:
-        """ initiates SimpleT5 class """
+        """initiates SimpleT5 class"""
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print("Using device:", device)
+
         pass
 
-    def from_pretrained(self, model_type="t5", model_name="t5-base") -> None:
+    def get_precision_dtype(self, precision):
+        if precision == 64:
+            return {"torch_dtype": torch.float64}
+        elif precision == 32:
+            return {"torch_dtype": torch.float32}
+        elif precision == 16:
+            return {"torch_dtype": torch.float16}
+        elif precision == 8:
+            return {"load_in_8bit": True}
+        else:
+            raise "exception ---> precision must be 64, 32, 16, or 8"
+
+    def from_pretrained(
+        self, model_type="t5", model_name="t5-base", precision=32
+    ) -> None:
         """
         loads T5/MT5 Model model for training/finetuning
         Args:
             model_type (str, optional): "t5" or "mt5" . Defaults to "t5".
             model_name (str, optional): exact model architecture name, "t5-base" or "t5-large". Defaults to "t5-base".
+            precision  (int, optional): sets precision training - Double precision (64), full precision (32), half precision (16), or fourth precision (8). Defaults to 32.
         """
         if model_type == "t5":
             self.tokenizer = T5Tokenizer.from_pretrained(f"{model_name}")
@@ -312,8 +331,13 @@ class SimpleT5:
             self.model = T5ForConditionalGeneration.from_pretrained(
                 f"{model_name}", return_dict=True
             )
-        elif model_type =="codet5":
+        elif model_type == "codet5":
             self.tokenizer = RobertaTokenizer.from_pretrained(f"{model_name}")
+            self.model = T5ForConditionalGeneration.from_pretrained(
+                f"{model_name}", return_dict=True
+            )
+        elif model_type == "flant5":
+            self.tokenizer = T5Tokenizer.from_pretrained(f"{model_name}")
             self.model = T5ForConditionalGeneration.from_pretrained(
                 f"{model_name}", return_dict=True
             )
@@ -401,7 +425,11 @@ class SimpleT5:
         trainer.fit(self.T5Model, self.data_module)
 
     def load_model(
-        self, model_type: str = "t5", model_dir: str = "outputs", use_gpu: bool = False
+        self,
+        model_type: str = "t5",
+        model_dir: str = "outputs",
+        use_gpu: bool = False,
+        precision=32,
     ):
         """
         loads a checkpoint for inferencing/prediction
@@ -409,7 +437,9 @@ class SimpleT5:
             model_type (str, optional): "t5" or "mt5". Defaults to "t5".
             model_dir (str, optional): path to model directory. Defaults to "outputs".
             use_gpu (bool, optional): if True, model uses gpu for inferencing/prediction. Defaults to True.
+            precision (int, optional): sets precision training - Double precision (64), full precision (32) or half precision (16), or fourth precision (8). Defaults to 32.
         """
+
         if model_type == "t5":
             self.model = T5ForConditionalGeneration.from_pretrained(f"{model_dir}")
             self.tokenizer = T5Tokenizer.from_pretrained(f"{model_dir}")
@@ -419,9 +449,12 @@ class SimpleT5:
         elif model_type == "byt5":
             self.model = T5ForConditionalGeneration.from_pretrained(f"{model_dir}")
             self.tokenizer = ByT5Tokenizer.from_pretrained(f"{model_dir}")
-        elif model_type =="codet5":
+        elif model_type == "codet5":
             self.model = T5ForConditionalGeneration.from_pretrained(f"{model_dir}")
             self.tokenizer = RobertaTokenizer.from_pretrained(f"{model_dir}")
+        elif model_type == "flant5":
+            self.model = T5ForConditionalGeneration.from_pretrained(f"{model_dir}")
+            self.tokenizer = T5Tokenizer.from_pretrained(f"{model_dir}")
 
         if use_gpu:
             if torch.cuda.is_available():
@@ -437,6 +470,7 @@ class SimpleT5:
         self,
         source_text: str,
         max_length: int = 512,
+        input_max_length: int = 512,
         num_return_sequences: int = 1,
         num_beams: int = 2,
         top_k: int = 50,
@@ -453,6 +487,7 @@ class SimpleT5:
         Args:
             source_text (str): any text for generating predictions
             max_length (int, optional): max token length of prediction. Defaults to 512.
+            input_max_length (int, optional): max token length of input text. Defaults to 512.
             num_return_sequences (int, optional): number of predictions to be returned. Defaults to 1.
             num_beams (int, optional): number of beams. Defaults to 2.
             top_k (int, optional): Defaults to 50.
@@ -467,7 +502,11 @@ class SimpleT5:
             list[str]: returns predictions
         """
         input_ids = self.tokenizer.encode(
-            source_text, return_tensors="pt", add_special_tokens=True
+            source_text,
+            return_tensors="pt",
+            add_special_tokens=True,
+            max_length=input_max_length,
+            truncation=True,
         )
         input_ids = input_ids.to(self.device)
         generated_ids = self.model.generate(
