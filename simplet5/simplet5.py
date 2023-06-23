@@ -376,7 +376,7 @@ class SimpleT5:
             save_only_last_epoch (bool, optional): If True, saves only the last epoch else models are saved at every epoch
         """
         if precision == 16:
-            precision = "bf16-mixed"
+            precision = "bf16"
 
         self.data_module = LightningDataModule(
             train_df,
