@@ -300,9 +300,9 @@ class SimpleT5:
         elif precision == 32:
             return {"torch_dtype": torch.float32}
         elif precision == 16:
-            return {"torch_dtype": torch.float16}
-        elif precision == 8:
-            return {"load_in_8bit": True}
+            return {"torch_dtype": torch.bfloat16}
+        # elif precision == 8:
+        #     return {"load_in_8bit": True}
         else:
             raise "exception ---> precision must be 64, 32, 16, or 8"
 
@@ -319,27 +319,27 @@ class SimpleT5:
         if model_type == "t5":
             self.tokenizer = T5Tokenizer.from_pretrained(f"{model_name}")
             self.model = T5ForConditionalGeneration.from_pretrained(
-                f"{model_name}", return_dict=True
+                f"{model_name}", return_dict=True, **self.get_precision_dtype(precision)
             )
         elif model_type == "mt5":
             self.tokenizer = MT5Tokenizer.from_pretrained(f"{model_name}")
             self.model = MT5ForConditionalGeneration.from_pretrained(
-                f"{model_name}", return_dict=True
+                f"{model_name}", return_dict=True, **self.get_precision_dtype(precision)
             )
         elif model_type == "byt5":
             self.tokenizer = ByT5Tokenizer.from_pretrained(f"{model_name}")
             self.model = T5ForConditionalGeneration.from_pretrained(
-                f"{model_name}", return_dict=True
+                f"{model_name}", return_dict=True, **self.get_precision_dtype(precision)
             )
         elif model_type == "codet5":
             self.tokenizer = RobertaTokenizer.from_pretrained(f"{model_name}")
             self.model = T5ForConditionalGeneration.from_pretrained(
-                f"{model_name}", return_dict=True
+                f"{model_name}", return_dict=True, **self.get_precision_dtype(precision)
             )
         elif model_type == "flant5":
             self.tokenizer = T5Tokenizer.from_pretrained(f"{model_name}")
             self.model = T5ForConditionalGeneration.from_pretrained(
-                f"{model_name}", return_dict=True
+                f"{model_name}", return_dict=True, **self.get_precision_dtype(precision)
             )
 
     def train(
@@ -375,6 +375,9 @@ class SimpleT5:
             dataloader_num_workers (int, optional): number of workers in train/test/val dataloader
             save_only_last_epoch (bool, optional): If True, saves only the last epoch else models are saved at every epoch
         """
+        if precision == 16:
+            precision = "bf16-mixed"
+
         self.data_module = LightningDataModule(
             train_df,
             eval_df,
@@ -441,19 +444,29 @@ class SimpleT5:
         """
 
         if model_type == "t5":
-            self.model = T5ForConditionalGeneration.from_pretrained(f"{model_dir}")
+            self.model = T5ForConditionalGeneration.from_pretrained(
+                f"{model_dir}", **self.get_precision_dtype(precision)
+            )
             self.tokenizer = T5Tokenizer.from_pretrained(f"{model_dir}")
         elif model_type == "mt5":
-            self.model = MT5ForConditionalGeneration.from_pretrained(f"{model_dir}")
+            self.model = MT5ForConditionalGeneration.from_pretrained(
+                f"{model_dir}", **self.get_precision_dtype(precision)
+            )
             self.tokenizer = MT5Tokenizer.from_pretrained(f"{model_dir}")
         elif model_type == "byt5":
-            self.model = T5ForConditionalGeneration.from_pretrained(f"{model_dir}")
+            self.model = T5ForConditionalGeneration.from_pretrained(
+                f"{model_dir}", **self.get_precision_dtype(precision)
+            )
             self.tokenizer = ByT5Tokenizer.from_pretrained(f"{model_dir}")
         elif model_type == "codet5":
-            self.model = T5ForConditionalGeneration.from_pretrained(f"{model_dir}")
+            self.model = T5ForConditionalGeneration.from_pretrained(
+                f"{model_dir}", **self.get_precision_dtype(precision)
+            )
             self.tokenizer = RobertaTokenizer.from_pretrained(f"{model_dir}")
         elif model_type == "flant5":
-            self.model = T5ForConditionalGeneration.from_pretrained(f"{model_dir}")
+            self.model = T5ForConditionalGeneration.from_pretrained(
+                f"{model_dir}", **self.get_precision_dtype(precision)
+            )
             self.tokenizer = T5Tokenizer.from_pretrained(f"{model_dir}")
 
         if use_gpu:
