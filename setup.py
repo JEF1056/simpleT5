@@ -43,8 +43,8 @@ setuptools.setup(
         "pandas",
         "sentencepiece",
         "torch>=1.7.0,!=1.8.0",  # excludes torch v1.8.0
-        "transformers==4.16.2",
-        "pytorch-lightning==1.5.10",
+        "transformers==4.28.1",
+        "pytorch-lightning==1.9.5",
     ],
     classifiers=[
         "Intended Audience :: Developers",
