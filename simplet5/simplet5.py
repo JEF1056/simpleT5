@@ -295,14 +295,15 @@ class SimpleT5:
         pass
 
     def get_precision_dtype(self, precision):
-        if precision == 64:
+        precision = str(precision)
+        if precision == "64":
             return {"torch_dtype": torch.float64}
-        elif precision == 32:
+        elif precision == "32":
             return {"torch_dtype": torch.float32}
-        elif precision == 16:
+        elif precision == "16":
+            return {"torch_dtype": torch.float16}
+        elif precision == "bf16":
             return {"torch_dtype": torch.bfloat16}
-        # elif precision == 8:
-        #     return {"load_in_8bit": True}
         else:
             raise "exception ---> precision must be 64, 32, 16, or 8"
 
@@ -370,13 +371,11 @@ class SimpleT5:
             use_gpu (bool, optional): if True, model uses gpu for training. Defaults to True.
             outputdir (str, optional): output directory to save model checkpoints. Defaults to "outputs".
             early_stopping_patience_epochs (int, optional): monitors val_loss on epoch end and stops training, if val_loss does not improve after the specied number of epochs. set 0 to disable early stopping. Defaults to 0 (disabled)
-            precision (int, optional): sets precision training - Double precision (64), full precision (32) or half precision (16). Defaults to 32.
+            precision (int, optional): sets precision training - Double precision (64), full precision (32), brainfloat half precision (bf16) or half precision (16). Defaults to 32.
             logger (pytorch_lightning.loggers) : any logger supported by PyTorch Lightning. Defaults to "default". If "default", pytorch lightning default logger is used.
             dataloader_num_workers (int, optional): number of workers in train/test/val dataloader
             save_only_last_epoch (bool, optional): If True, saves only the last epoch else models are saved at every epoch
         """
-        if precision == 16:
-            precision = "bf16"
 
         self.data_module = LightningDataModule(
             train_df,
