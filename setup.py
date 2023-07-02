@@ -44,7 +44,7 @@ setuptools.setup(
         "sentencepiece",
         "torch>=1.7.0,!=1.8.0",  # excludes torch v1.8.0
         "transformers==4.28.1",
-        "pytorch-lightning==1.9.5",
+        "pytorch-lightning==2.0.4",
     ],
     classifiers=[
         "Intended Audience :: Developers",
