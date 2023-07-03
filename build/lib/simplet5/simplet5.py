@@ -266,11 +266,11 @@ class LightningModel(pl.LightningModule):
 
     def on_train_epoch_end(self):
         """save tokenizer and model on epoch end"""
-        print(self.train_loss)
         self.average_training_loss = np.round(
             torch.mean(torch.stack(self.train_loss)).item(),
             4,
         )
+        self.train_loss = []
         path = f"{self.outputdir}/simplet5-epoch-{self.current_epoch}-train-loss-{str(self.average_training_loss)}-val-loss-{str(self.average_validation_loss)}"
         if self.save_only_last_epoch:
             if self.current_epoch == self.trainer.max_epochs - 1:
