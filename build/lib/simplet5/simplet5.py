@@ -187,6 +187,7 @@ class LightningModel(pl.LightningModule):
         self.tokenizer = tokenizer
         self.outputdir = outputdir
         self.val_outputs = []
+        self.train_loss = []
         self.average_training_loss = None
         self.average_validation_loss = None
         self.save_only_last_epoch = save_only_last_epoch
@@ -209,12 +210,14 @@ class LightningModel(pl.LightningModule):
         labels = batch["labels"]
         labels_attention_mask = batch["labels_attention_mask"]
 
-        loss, outputs = self(
+        loss, _ = self(
             input_ids=input_ids,
             attention_mask=attention_mask,
             decoder_attention_mask=labels_attention_mask,
             labels=labels,
         )
+
+        self.train_loss.append(loss)
 
         self.log(
             "train_loss", loss, prog_bar=True, logger=True, on_epoch=True, on_step=True
@@ -261,10 +264,11 @@ class LightningModel(pl.LightningModule):
         """configure optimizers"""
         return AdamW(self.parameters(), lr=0.0001)
 
-    def on_train_epoch_end(self, training_step_outputs):
+    def on_train_epoch_end(self):
         """save tokenizer and model on epoch end"""
+        print(self.train_loss)
         self.average_training_loss = np.round(
-            torch.mean(torch.stack([x["loss"] for x in training_step_outputs])).item(),
+            torch.mean(torch.stack(self.train_loss)).item(),
             4,
         )
         path = f"{self.outputdir}/simplet5-epoch-{self.current_epoch}-train-loss-{str(self.average_training_loss)}-val-loss-{str(self.average_validation_loss)}"
@@ -306,7 +310,7 @@ class SimpleT5:
         elif precision == "bf16":
             return {"torch_dtype": torch.bfloat16}
         else:
-            raise "exception ---> precision must be 64, 32, 16, or 8"
+            raise "exception ---> precision must be 64, 32, 16, or bf16"
 
     def from_pretrained(
         self, model_type="t5", model_name="t5-base", precision=32
@@ -377,6 +381,9 @@ class SimpleT5:
             dataloader_num_workers (int, optional): number of workers in train/test/val dataloader
             save_only_last_epoch (bool, optional): If True, saves only the last epoch else models are saved at every epoch
         """
+
+        if precision == "bf16":
+            precision = "bf16-mixed"
 
         self.data_module = LightningDataModule(
             train_df,
