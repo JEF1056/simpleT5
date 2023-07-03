@@ -271,7 +271,7 @@ class LightningModel(pl.LightningModule):
         """save tokenizer and model on epoch end"""
         self.average_training_loss = round(self.train_loss / self.train_steps, 4)
         self.train_loss = 0
-        self.train_steps = 0
+        self.train_steps = 1
         path = f"{self.outputdir}/simplet5-epoch-{self.current_epoch}-train-loss-{str(self.average_training_loss)}-val-loss-{str(self.average_validation_loss)}"
         if self.save_only_last_epoch:
             if self.current_epoch == self.trainer.max_epochs - 1:
@@ -284,7 +284,7 @@ class LightningModel(pl.LightningModule):
     def on_validation_epoch_end(self):
         self.average_validation_loss = round(self.val_loss / self.val_steps, 4)
         self.val_loss = 0
-        self.val_steps = 0
+        self.val_steps = 1
 
 
 class SimpleT5:
