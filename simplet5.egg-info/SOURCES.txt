@@ -1,0 +1,11 @@
+LICENSE
+README.md
+setup.py
+simplet5/__init__.py
+simplet5/simplet5.py
+simplet5/testing.py
+simplet5.egg-info/PKG-INFO
+simplet5.egg-info/SOURCES.txt
+simplet5.egg-info/dependency_links.txt
+simplet5.egg-info/requires.txt
+simplet5.egg-info/top_level.txt

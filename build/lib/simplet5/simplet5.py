@@ -306,7 +306,7 @@ class SimpleT5:
         elif precision == "bf16":
             return {"torch_dtype": torch.bfloat16}
         else:
-            raise "exception ---> precision must be 64, 32, 16, or bf16"
+            raise "exception ---> precision must be 64, 32, 16, or 8"
 
     def from_pretrained(
         self, model_type="t5", model_name="t5-base", precision=32
@@ -377,9 +377,6 @@ class SimpleT5:
             dataloader_num_workers (int, optional): number of workers in train/test/val dataloader
             save_only_last_epoch (bool, optional): If True, saves only the last epoch else models are saved at every epoch
         """
-        
-        if precision == "bf16":
-            precision = "bf16-mixed"
 
         self.data_module = LightningDataModule(
             train_df,

@@ -1,0 +1,6 @@
+numpy
+pandas
+sentencepiece
+torch!=1.8.0,>=2.0.0
+transformers==4.28.1
+pytorch-lightning==2.0.4
