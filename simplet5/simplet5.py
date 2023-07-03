@@ -260,7 +260,7 @@ class LightningModel(pl.LightningModule):
         """configure optimizers"""
         return AdamW(self.parameters(), lr=0.0001)
 
-    def training_epoch_end(self, training_step_outputs):
+    def on_train_epoch_end(self, training_step_outputs):
         """save tokenizer and model on epoch end"""
         self.average_training_loss = np.round(
             torch.mean(torch.stack([x["loss"] for x in training_step_outputs])).item(),
@@ -275,7 +275,7 @@ class LightningModel(pl.LightningModule):
             self.tokenizer.save_pretrained(path)
             self.model.save_pretrained(path)
 
-    def validation_epoch_end(self, validation_step_outputs):
+    def on_validation_epoch_end(self, validation_step_outputs):
         _loss = [x.cpu() for x in validation_step_outputs]
         self.average_validation_loss = np.round(
             torch.mean(torch.stack(_loss)).item(),
